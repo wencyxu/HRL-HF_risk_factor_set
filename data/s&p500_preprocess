@@ -1,19 +1,26 @@
-import pandas as pd
+import os
 import datetime
+import numpy as np
+import pandas as pd
+from scipy import stats
+from scipy.special import gamma, psi
 
-df = pd.read_csv("aal.csv")
 
+'''Using linear interpolation to fill in missing rows for the period 9:30-16:00 during the trading day'''
 
 def handle(df):
     df.drop(columns=["date"], inplace=True)
     df.set_index("time", inplace=True)
+    # Find the date of the missing bar
     if len(df) == 79:
         return df
     while True:
+        # Find the time of the missing bar
         foundMissingBar = False
         for i in range(0, len(df) - 1):
             t = datetime.datetime.strptime(df.index[i], "%H:%M:%S")
             subT = datetime.datetime.strptime(df.index[i + 1], "%H:%M:%S") - t
+            # in 5-minute increments
             subBar = subT.seconds // 60 // 5
             if subBar == 1:
                 continue
@@ -21,7 +28,7 @@ def handle(df):
             buttomIndex = df.index[i]
             topIndex = df.index[i + 1]
 
-            # 使用线性插值法，生成缺失的bar
+            # linear interpolation for generate the missing bar
             for j in range(1, subBar):
                 newT = t + datetime.timedelta(minutes=5 * j)
                 df.loc[newT.strftime("%H:%M:%S")] = (
@@ -34,9 +41,102 @@ def handle(df):
     return df
 
 
-# 9:30-16:00
+folder_path = r"E:\2023Oct\HTF_risk_factor\data\sp500_1year_5min"
+new_folder_path = r"E:\2023Oct\HTF_risk_factor\data\sp500_1year_5min_full"
 
-df = df.groupby("date").apply(handle)
-df.to_csv(
-    "aal2.csv",
-)
+
+for file in os.listdir(folder_path):
+    if file.endswith(".csv"):      
+        df = pd.read_csv(os.path.join(folder_path, file))
+        df = df.groupby("date").apply(handle)  
+        df.to_csv(os.path.join(new_folder_path, file))
+
+
+
+
+
+'''Load all sp500 asset data to calculate normalized features'''
+
+def realized_quantity(fun):
+    return intraday_returns.groupby(pd.Grouper(freq="1d")).apply(fun)[index]
+
+if __name__ == "__main__":
+    
+    folder_path = r"E:\2023Oct\HTF_risk_factor\data\sp500_1year_5min_full"
+    for file in os.listdir(folder_path):
+        if file.endswith(".csv"):
+            data = pd.read_csv(os.path.join(folder_path, file))
+            data["date_time"] = pd.to_datetime(data["date"] + " " + data["time"])
+            data.set_index("date_time", inplace=True)
+            
+            # Load data and store the intraday returns
+            intraday_returns = np.log(data["close"] / data["close"].shift(1)).dropna() 
+            
+            # Index of all days
+            index = data.groupby(pd.Grouper(freq="1d")).first().dropna().index
+            
+            # setting & required constants
+            M = 48
+            # μ1
+            mu_1 = np.sqrt((2 / np.pi))
+            # μ43
+            mu_43 = 2 ** (2 / 3) * gamma(7 / 6) * gamma(1 / 2) ** (-1)
+            
+            # First and last price of each day 
+            prices_open = data.resample('D').first()['open']
+            prices_close = data.resample('D').last()['close']
+            
+            # Return (close-to-close) 
+            r_cc = pd.Series(np.log(prices_close / prices_close.shift(1)), name='r_cc')
+            # Return （open-to-close)
+            r_oc = pd.Series(np.log(prices_close / prices_open), name='r_oc')
+            
+            # Realized Variance (Andersen and Bollerslev, 1998)
+            rv = realized_quantity(lambda x: (x ** 2).sum())
+            
+            # Realized absolute variation (Forsberg and Ghysels, 2007)
+            rav = mu_1 ** (-1) * M ** (-.5) * realized_quantity(lambda x: x.abs().sum())
+            
+            # Realized bipower variation (Barndorff-Nielsen and Shephard; 2004, 2006)
+            bv = mu_1 ** (-2) * realized_quantity(lambda x: (x.abs() * x.shift(1).abs()).sum())
+            
+            # Standardized tri-power quarticity (see e.g. Forsberg & Ghysels, 2007)
+            tq = M * mu_43 ** (-3) * realized_quantity(
+                lambda x: (x.abs() ** (4 / 3) * x.shift(1).abs() ** (4 / 3) * x.shift(2).abs() ** (4 / 3)).sum())
+            
+            # Jump test by Huang and Tauchen (2005)
+            j = (np.log(rv) - np.log(bv)) / \
+                ((mu_1 ** -4 + 2 * mu_1 ** -2 - 5) / (M * tq * bv ** -2)) ** 0.5
+            jump = j.abs() >= stats.norm.ppf(0.999)
+            
+            # Separate continuous and discontinuous parts of the quadratic variation
+            iv = pd.Series(0, index=index)
+            iv[jump] = bv[jump] ** 0.5
+            iv[~jump] = rv[~jump] ** 0.5
+            jv = pd.Series(0, index=index)
+            jv[jump] = rv[jump] ** 0.5 - bv[jump] ** 0.5
+            jv[jv < 0] = 0
+            
+            # Realized Semivariance (Barndorff-Nielsen, Kinnebrock and Shephard, 2010)
+            rv_m = realized_quantity(lambda x: (x ** 2 * (x < 0)).sum())
+            rv_p = realized_quantity(lambda x: (x ** 2 * (x > 0)).sum())
+            
+            # Signed jump variation (Patton and Sheppard, 2015)
+            sjv = rv_p - rv_m
+            sjv_p = sjv * (sjv > 0)
+            sjv_m = sjv * (sjv < 0)
+            
+            # Realized Skewness and Kurtosis  (see, e.g. Amaya, Christoffersen, Jacobs and Vasquez, 2015)
+            rm3 = realized_quantity(lambda x: (x ** 3).sum())
+            rm4 = realized_quantity(lambda x: (x ** 4).sum())
+            rs = np.sqrt(M) * rm3 / rv ** (3 / 2)
+            rk = M * rm4 / rv ** 2
+            
+            # Export data
+            out = pd.concat([r_cc, r_oc, rav, rv ** .5, bv ** .5, rv_m ** 0.5, rv_p ** 0.5,
+                             iv, jv, sjv, sjv_p, sjv_m, rs, rk], axis=1)
+            out.columns = ['r_cc', 'r_oc', 'rav', 'rvol', 'bvol', 'rvol_m', 'rvol_p',
+                           'ivol', 'jvol', 'sjv', 'sjv_p', 'sjv_m', 'rs', 'rk']
+            # df转csv
+            out = (out - out.mean()) / out.std()
+            out.to_csv(os.path.join(folder_path,  file))  
