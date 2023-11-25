@@ -1,0 +1,42 @@
+import pandas as pd
+import datetime
+
+df = pd.read_csv("aal.csv")
+
+
+def handle(df):
+    df.drop(columns=["date"], inplace=True)
+    df.set_index("time", inplace=True)
+    if len(df) == 79:
+        return df
+    while True:
+        foundMissingBar = False
+        for i in range(0, len(df) - 1):
+            t = datetime.datetime.strptime(df.index[i], "%H:%M:%S")
+            subT = datetime.datetime.strptime(df.index[i + 1], "%H:%M:%S") - t
+            subBar = subT.seconds // 60 // 5
+            if subBar == 1:
+                continue
+            foundMissingBar = True
+            buttomIndex = df.index[i]
+            topIndex = df.index[i + 1]
+
+            # 使用线性插值法，生成缺失的bar
+            for j in range(1, subBar):
+                newT = t + datetime.timedelta(minutes=5 * j)
+                df.loc[newT.strftime("%H:%M:%S")] = (
+                    df.iloc[i] + (df.loc[topIndex] - df.loc[buttomIndex]) * j / subBar
+                )
+            df.sort_index(inplace=True)
+            break
+        if not foundMissingBar:
+            break
+    return df
+
+
+# 9:30-16:00
+
+df = df.groupby("date").apply(handle)
+df.to_csv(
+    "aal2.csv",
+)
