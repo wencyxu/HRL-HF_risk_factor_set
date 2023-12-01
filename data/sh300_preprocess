@@ -12,7 +12,7 @@ def realized_quantity(fun):
 
 if __name__ == "__main__":
     
-    folder_path = r"E:\2023Oct\HTF_risk_factor\data\yuan_test" 
+    folder_path = r"E:\2023Oct\HTF_risk_factor\data\sh300_1year_1min_23\5m_test"
     for file in os.listdir(folder_path):
         if file.endswith(".csv"):
             data = pd.read_csv(os.path.join(folder_path, file))
@@ -30,7 +30,7 @@ if __name__ == "__main__":
             # μ1
             mu_1 = np.sqrt((2 / np.pi))
             # μ43
-            mu_43 = 2 ** (2 / 3) * gamma(7 / 6) * gamma(1 / 2) ** (-1)
+            # mu_43 = 2 ** (2 / 3) * gamma(7 / 6) * gamma(1 / 2) ** (-1)
             
             # First and last price of each day 
             prices_open = data.resample('D').first()['open']
@@ -38,8 +38,6 @@ if __name__ == "__main__":
             
             # Return (close-to-close) 
             r_cc = pd.Series(np.log(prices_close / prices_close.shift(1)), name='r_cc')
-            # Return （open-to-close)
-            r_oc = pd.Series(np.log(prices_close / prices_open), name='r_oc')
             
             # Realized Variance (Andersen and Bollerslev, 1998)
             rv = realized_quantity(lambda x: (x ** 2).sum())
@@ -50,7 +48,7 @@ if __name__ == "__main__":
             # Realized bipower variation (Barndorff-Nielsen and Shephard; 2004, 2006)
             bv = mu_1 ** (-2) * realized_quantity(lambda x: (x.abs() * x.shift(1).abs()).sum())
             
-            # Standardized tri-power quarticity (see e.g. Forsberg & Ghysels, 2007)
+            '''# Standardized tri-power quarticity (see e.g. Forsberg & Ghysels, 2007)
             tq = M * mu_43 ** (-3) * realized_quantity(
                 lambda x: (x.abs() ** (4 / 3) * x.shift(1).abs() ** (4 / 3) * x.shift(2).abs() ** (4 / 3)).sum())
             
@@ -65,13 +63,13 @@ if __name__ == "__main__":
             iv[~jump] = rv[~jump] ** 0.5
             jv = pd.Series(0, index=index)
             jv[jump] = rv[jump] ** 0.5 - bv[jump] ** 0.5
-            jv[jv < 0] = 0
+            jv[jv < 0] = 0'''
             
             # Realized Semivariance (Barndorff-Nielsen, Kinnebrock and Shephard, 2010)
             rv_m = realized_quantity(lambda x: (x ** 2 * (x < 0)).sum())
             rv_p = realized_quantity(lambda x: (x ** 2 * (x > 0)).sum())
             
-            # Signed jump variation (Patton and Sheppard, 2015)
+            '''# Signed jump variation (Patton and Sheppard, 2015)
             sjv = rv_p - rv_m
             sjv_p = sjv * (sjv > 0)
             sjv_m = sjv * (sjv < 0)
@@ -80,13 +78,33 @@ if __name__ == "__main__":
             rm3 = realized_quantity(lambda x: (x ** 3).sum())
             rm4 = realized_quantity(lambda x: (x ** 4).sum())
             rs = np.sqrt(M) * rm3 / rv ** (3 / 2)
-            rk = M * rm4 / rv ** 2
+            rk = M * rm4 / rv ** 2'''
             
             # Export data
-            out = pd.concat([r_cc, r_oc, rav, rv ** .5, bv ** .5, rv_m ** 0.5, rv_p ** 0.5,
-                             iv, jv, sjv, sjv_p, sjv_m, rs, rk], axis=1)
-            out.columns = ['r_cc', 'r_oc', 'rav', 'rvol', 'bvol', 'rvol_m', 'rvol_p',
-                           'ivol', 'jvol', 'sjv', 'sjv_p', 'sjv_m', 'rs', 'rk']
+            out = pd.concat([r_cc, rav, rv ** .5, bv ** .5, rv_m ** 0.5, rv_p ** 0.5]
+                              ,axis=1) # iv, jv, sjv, sjv_p, sjv_m, rs, rk],
+            out.columns = ['r_cc', 'rav', 'rvol', 'bvol', 'rvol_m', 'rvol_p']
+                            # 'ivol', 'jvol', 'sjv', 'sjv_p', 'sjv_m', 'rs', 'rk'
             # df转csv
             out = (out - out.mean()) / out.std()
-            out.to_csv(os.path.join(folder_path,  file))    
+            out.to_csv(os.path.join(folder_path,  file)) 
+
+
+# Remove empty lines and forward fill missing values
+import os
+import pandas as pd
+drop_rows = [7,8,14,15,21,22,28,29,35,36,42,43,49,50,56,57,63,64,65,70,71,78,77,84,85,86,87,88,89,90,91,92,98,99,105,106,112,113,
+119,120,126,127,133,134,140,141,147,148,154,155,158,161,162,168,169,175,176,182,183,184,185,186,189,190,196,197,203,204,210,211,
+217,218,224,225,231,232,236,237,238,239,245,246,252,253,259,260,266,267,273,274,280,281,287,288,294,295,301,302,308,309,315,316,
+322,323,329,330,335,336,337,338,339,340,341,342,343,344,350,351,357,358,364,365]
+folder_path = r"E:\2023Oct\HTF_risk_factor\data\sh300_1year_1min_23\5m_test"
+for file_name in os.listdir(folder_path):
+    if file_name.endswith(".csv"):
+        file_path = os.path.join(folder_path, file_name)
+        df = pd.read_csv(file_path)
+        df = df.drop(drop_rows, axis=0)
+        df = df.fillna(method="ffill")
+        df = df.fillna(method="bfill")
+        df.to_csv(file_path, index=False)
+        print(f"已处理文件：{file_path}")
+
