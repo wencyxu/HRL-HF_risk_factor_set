@@ -12,7 +12,7 @@ def realized_quantity(fun):
 
 if __name__ == "__main__":
     
-    folder_path = r"E:\2023Oct\HTF_risk_factor\data\sh300_1year_1min_23\5m_test"
+    folder_path = r"E:\2023Oct\HTF_risk_factor\data\sh300_1year_1min_23\5m_feature"
     for file in os.listdir(folder_path):
         if file.endswith(".csv"):
             data = pd.read_csv(os.path.join(folder_path, file))
@@ -52,7 +52,7 @@ if __name__ == "__main__":
             tq = M * mu_43 ** (-3) * realized_quantity(
                 lambda x: (x.abs() ** (4 / 3) * x.shift(1).abs() ** (4 / 3) * x.shift(2).abs() ** (4 / 3)).sum())
             
-            # Jump test by Huang and Tauchen (2005)
+            # Jump feature by Huang and Tauchen (2005)
             j = (np.log(rv) - np.log(bv)) / \
                 ((mu_1 ** -4 + 2 * mu_1 ** -2 - 5) / (M * tq * bv ** -2)) ** 0.5
             jump = j.abs() >= stats.norm.ppf(0.999)
@@ -97,7 +97,7 @@ drop_rows = [7,8,14,15,21,22,28,29,35,36,42,43,49,50,56,57,63,64,65,70,71,78,77,
 119,120,126,127,133,134,140,141,147,148,154,155,158,161,162,168,169,175,176,182,183,184,185,186,189,190,196,197,203,204,210,211,
 217,218,224,225,231,232,236,237,238,239,245,246,252,253,259,260,266,267,273,274,280,281,287,288,294,295,301,302,308,309,315,316,
 322,323,329,330,335,336,337,338,339,340,341,342,343,344,350,351,357,358,364,365]
-folder_path = r"E:\2023Oct\HTF_risk_factor\data\sh300_1year_1min_23\5m_test"
+folder_path = r"E:\2023Oct\HTF_risk_factor\data\sh300_1year_1min_23\5m_feature"
 for file_name in os.listdir(folder_path):
     if file_name.endswith(".csv"):
         file_path = os.path.join(folder_path, file_name)
