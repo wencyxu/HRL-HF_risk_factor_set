@@ -2,6 +2,8 @@
 
 
 import os
+import csv
+import itertools
 import pandas as pd
 import numpy as np
 from scipy.special import gamma, psi
@@ -91,8 +93,6 @@ if __name__ == "__main__":
 
 
 # Remove empty lines and forward fill missing values
-import os
-import pandas as pd
 drop_rows = [7,8,14,15,21,22,28,29,35,36,42,43,49,50,56,57,63,64,65,70,71,78,77,84,85,86,87,88,89,90,91,92,98,99,105,106,112,113,
 119,120,126,127,133,134,140,141,147,148,154,155,158,161,162,168,169,175,176,182,183,184,185,186,189,190,196,197,203,204,210,211,
 217,218,224,225,231,232,236,237,238,239,245,246,252,253,259,260,266,267,273,274,280,281,287,288,294,295,301,302,308,309,315,316,
@@ -107,4 +107,102 @@ for file_name in os.listdir(folder_path):
         df = df.fillna(method="bfill")
         df.to_csv(file_path, index=False)
         print(f"已处理文件：{file_path}")
+ 
 
+# ffill missing values
+import os
+import pandas as pd
+
+folder_path =r"E:\2023Oct\HTF_risk_factor\data\sp500_1year_5min_23\5_min3"
+for file_name in os.listdir(folder_path):
+    if file_name.endswith(".csv"):
+        file_path = os.path.join(folder_path, file_name)
+        # specify index_col=0 to read the first column as a normal column
+        df = pd.read_csv(file_path, index_col=0)
+        # use ffill method to fill all missing values in both rows and columns
+        # specify axis=None to fill along both directions
+        df = df.fillna(method="ffill", axis=1) # 修改了这一行
+        df = df.fillna(method="bfill", axis=1)
+        df.to_csv(file_path, index=False)
+        print(f"已处理文件：{file_path}")
+
+
+# delete first column
+def delete_first_line_in_csv_files(directory):
+    for filename in os.listdir(directory):
+        if filename.endswith('.csv'):
+            with open(os.path.join(directory, filename), 'r') as file:
+                lines = file.readlines()
+            with open(os.path.join(directory, filename), 'w') as file:
+                file.writelines(lines[1:])
+
+
+
+
+# csv➡npz
+folder_path = r"E:\2023Oct\HTF_risk_factor\data\sp500_1year_5min_23\5_min3"
+
+n_sample = 251
+stock_num = 300
+feature_num = 6
+weight_set = 30
+weight_num = 6
+operator_set = 5
+operator_num = 5
+    
+data_list = []
+for filename in os.listdir(folder_path):
+    if filename.endswith(".csv"):
+        data = np.loadtxt(os.path.join(folder_path, filename), delimiter=",")
+        data_list.append(data)
+    
+data_array = np.array(data_list).transpose((1, 0, 2))
+input_feature = data_array[:, :, :-1]
+future_RV = data_array[:, :, -1]
+weight_array = np.array([
+    [1/6, 1/6, 1/6, 1/6, 1/6, 1/6],
+    [2/6, 0, 1/6, 1/6, 1/6, 1/6],
+    [3/6, 0, 0, 1/6, 1/6, 1/6],
+    [4/6, 0, 0, 0, 1/6, 1/6],
+    [5/6, 0, 0, 0, 0, 1/6],
+    [0, 2/6, 1/6, 1/6, 1/6, 1/6],
+    [0, 3/6, 0, 1/6, 1/6, 1/6],
+    [0, 4/6, 0, 0, 1/6, 1/6],
+    [0, 5/6, 0, 0, 0, 1/6],
+    [0, 0, 3/6, 1/6, 1/6, 1/6],
+    [0, 0, 4/6, 0, 1/6, 1/6],
+    [0, 0, 5/6, 0, 0, 1/6],
+    [0, 0, 0, 4/6, 1/6, 1/6],
+    [0, 0, 0, 5/6, 0, 1/6],
+    [0, 0, 0, 0, 5/6, 1/6],
+    [1/6, 2/6, 1/6, 1/6, 0, 1/6],
+    [1/6, 3/6, 0, 1/6, 0, 1/6],
+    [1/6, 4/6, 0, 0, 0, 1/6],
+    [1/6, 0, 2/6, 1/6, 0, 1/6],
+    [1/6, 0, 3/6, 0, 0, 1/6],
+    [1/6, 0, 0, 2/6, 0, 1/6],
+    [1/6, 0, 0, 0, 2/6, 1/6],
+    [0, 1/6, 2/6, 1/6, 0, 1/6],
+    [0, 1/6, 3/6, 0, 0, 1/6],
+    [0, 1/6, 0, 2/6, 0, 1/6],
+    [0, 1/6, 0, 0, 2/6, 1/6],
+    [0, 0, 1/6, 2/6, 0, 1/6],
+    [0, 0, 1/6, 0, 2/6, 1/6],
+    [0, 0, 0, 1/6, 2/6, 1/6],
+    [1/6, 1/6, 1/6, 1/6, 1/6, 0]
+])
+input_weight = np.tile(weight_array, (n_sample, 1, 1))
+operator_array = np.array(['+', '-', '*', '/', '**']) #  '%'
+operator_combinations = itertools.product(operator_array, repeat=operator_num)
+operator_combinations = np.array(list(operator_combinations))
+input_operator = np.tile(operator_combinations, (n_sample, 1, 1))
+np.savez(os.path.join(folder_path, "sp300.npz"), input_feature=input_feature, input_weight=input_weight, input_operator=input_operator, future_RV=future_RV)
+delete_first_line_in_csv_files(r"E:\2023Oct\HTF_risk_factor\data\sp500_1year_5min_23\5_min3")
+
+# load the npz file and access the arrays
+import numpy as np
+npzfile = np.load(r"E:\2023Oct\HTF_risk_factor\data\sp500_1year_5min_23\5_min3\sp500_1.npz")
+# access the input feature array
+input_feature = npzfile['input_feature']
+input_feature
+print(input_feature.shape)
