@@ -1,9 +1,8 @@
-
+import os
+import itertools
 import numpy as np
 import pandas as pd
-import itertools
 from scipy import stats
-import os
 from heapq import nlargest
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
