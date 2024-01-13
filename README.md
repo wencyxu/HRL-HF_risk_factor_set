@@ -12,9 +12,9 @@
 * There are three ways to calculate rewards (a measure of the three metrics that generate the mathematical expression and target of a high-frequency risk factor) in ```class Risk_Factor_Env: IC*, RankIC*, and IR*```.
 ## 3 How to train model:
 ### 3.1 HPPO-TO: 
-```python python run_main_hppo_to.py ```
+```python run_main_hppo_to.py ```
 ### 3.2 HPPO/DAC:
-```python python run_main_hrl.py ```
+```python run_main_hrl.py ```
 ### 3.3 PPO:     
-```python python run_main_ppo.py ```
+```python run_main_ppo.py ```
 
