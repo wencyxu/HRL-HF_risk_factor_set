@@ -7,11 +7,13 @@
 - pytorch 1.7.1
 - tensorboard 2.14.0
 - scipy 1.10.1
-## 2 How to train model:
-### 2.1 HPPO-TO: 
+## 2  Prepare you training data
+* For the above HRL/RL model use .npz file which contains ```python open,high,low,close,vwap,target``` as input. The dataset is of two types i.e. Environment name can be [sh300, sp500].
+## 3 How to train model:
+### 3.1 HPPO-TO: 
 ```python python run_main_hppo_to.py ```
-### 2.2 HPPO/DAC:
+### 3.2 HPPO/DAC:
 ```python python run_main_hrl.py ```
-### 2.3 PPO:     
+### 3.3 PPO:     
 ```python python run_main_ppo.py ```
-#### For the above HRL/RL model use .npz file which contains ```python open,high,low,close,vwap,target``` as input. The dataset is of two types i.e. Environment name can be [sh300, sp500].
+
