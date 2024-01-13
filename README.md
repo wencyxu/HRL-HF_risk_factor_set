@@ -7,9 +7,9 @@
 - pytorch 1.7.1
 - tensorboard 2.14.0
 - scipy 1.10.1
-## 2  Prepare you training data
+## 2  Prepare you training data:
 * For the above HRL/RL model use .npz file which contains ```open,high,low,close,vwap,target``` as input. The dataset is of two types i.e. ```arg.add_arg("env_name", "sh300", "Environment name, can be [sh300, sp500]")```.
-* There are three ways to calculate rewards (a measure of the correlation between the mathematical expression of generated High Frequency Risk Factors and the targets) in ```class Risk_Factor_Env: IC*, RankIC*, and IR*```.
+* There are three ways to calculate rewards (a measure of the correlation between mathematical expressions of generated High Frequency Risk Factors and targets) in ```class Risk_Factor_Env: IC*, RankIC*, and IR*```.
 ## 3 How to train model:
 ### 3.1 HPPO-TO: 
 ```python run_main_hppo_to.py ```
