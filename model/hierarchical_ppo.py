@@ -102,7 +102,7 @@ class HierarchicalPPO(torch.nn.Module):
         # optim = torch.optim.Adam(self.critic_lo.get_param() + self.critic_hi.get_param()
         #                          + list(self.policy.parameters()), lr=self.lr_option * lr_mult, weight_decay=1.e-3, eps=1e-5)
         
-        # 计算优势函数和固定的对数概率时不需要计算梯度
+        
         with torch.no_grad():
             states, options, options_1, actions, returns, advantages_hi, advantages_lo, vel_hi_array, vel_lo_array = \
                 self._calc_adv(sample_scar) # TODO: time consuming
@@ -112,53 +112,37 @@ class HierarchicalPPO(torch.nn.Module):
             fixed_pc = self.policy.log_trans(states, options_1).exp().detach()
         
         for _ in range(10):
-            # 生成一个随机排列，用于打乱样本的顺序
             inds = torch.randperm(states.size(0))
-            # 循环将样本分成小批量，并对每个小批量执行一步优化
             for ind_b in inds.split(self.mini_bs):
                 s_b, c_b, c_1b, a_b, ret_b, adv_hi_b, adv_lo_b, fixed_log_hi_b, fixed_log_lo_b, fixed_pc_b, fixed_vh_b, fixed_vl_b = \
                     states[ind_b], options[ind_b], options_1[ind_b], actions[ind_b], returns[ind_b], advantages_hi[ind_b], \
                     advantages_lo[ind_b], fixed_log_p_hi[ind_b], fixed_log_p_lo[ind_b], fixed_pc[ind_b], vel_hi_array[ind_b], vel_lo_array[ind_b]
 
                 # update the high-level policy
-                # 标准化优势函数
                 adv_hi_b = (adv_hi_b - adv_hi_b.mean()) / (adv_hi_b.std() + 1e-8) if ind_b.size(0) > 1 else 0.
-                # 计算对数概率和熵
                 logp, entropy = self.policy.option_log_prob_entropy(s_b, c_1b, c_b)
-                # 使用高级策略的critic来预测值函数
                 vpred = self.critic_hi.get_value(s_b, c_1b)
                 vpred_clip = fixed_vh_b + (vpred - fixed_vh_b).clamp(-self.clip_eps, self.clip_eps) # TODO: too small clip_eps
                 vf_loss = torch.max((vpred - ret_b).square(), (vpred_clip - ret_b).square()).mean() # necessary
-                # 计算策略比率
                 ratio = (logp - fixed_log_hi_b).clamp_max(15.).exp()
-                # 计算损失函数：策略梯度损失、值函数损失和熵的线性组合
                 pg_loss = -torch.min(adv_hi_b * ratio,
                                      adv_hi_b * ratio.clamp(1.0 - self.clip_eps, 1.0 + self.clip_eps)).mean()
                 loss = pg_loss + vf_loss * 0.5 - self.lambda_entropy_option * entropy.mean()  # TODO: adjust the weight 0.5
                 # TODO: try moving the entropy term to the return as shown in the paper rather than using it as an independent term here
-                # 将优化器的梯度清零
                 optim_hi.zero_grad()
-                # 计算损失函数的梯度
                 loss.backward()
                 # after many experiments i find that do not clamp performs the best
                 # torch.nn.utils.clip_grad_norm_(self.policy.get_param(low_policy=not is_option), 0.5)
                 optim_hi.step()
-                # 训练一个HRL的低级策略
                 if train_policy:
                     # update the low-level policy
-                    # 标准化低级策略的优势函数
                     adv_lo_b = (adv_lo_b - adv_lo_b.mean()) / (adv_lo_b.std() + 1e-8) if ind_b.size(0) > 1 else 0.
-                    # 计算策略对动作的对数概率和熵。熵用于鼓励策略探索更多的动作
                     logp, entropy = self.policy.policy_log_prob_entropy(s_b, c_b, a_b)
-                    # 获取低级策略的价值函数预测
                     vpred = self.critic_lo.get_value(s_b, c_b)
-                    # 价值函数的裁剪，以防止预测的价值函数和目标价值函数之间的差距过大
                     vpred_clip = fixed_vl_b + (vpred - fixed_vl_b).clamp(-self.clip_eps, self.clip_eps)
                     # note that the high critic and low critic are sharing the same return function, as mentioned in the paper
                     vf_loss = torch.max((vpred - ret_b).square(), (vpred_clip - ret_b).square()).mean()
-                    # 计算价值函数的损失
                     ratio = (logp - fixed_log_lo_b).clamp_max(15.).exp()
-                    # 计算策略梯度的损失
                     pg_loss = -torch.min(adv_lo_b * ratio, adv_lo_b * ratio.clamp(1.0 - self.clip_eps, 1.0 + self.clip_eps)).mean()
                     loss = pg_loss + vf_loss * 0.5 - self.lambda_entropy_policy * entropy.mean()
                     optim_lo.zero_grad()
