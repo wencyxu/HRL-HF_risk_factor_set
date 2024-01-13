@@ -8,11 +8,9 @@
 - tensorboard 2.14.0
 - scipy 1.10.1
 ## 2 How to train model:
-### 2.1 HPPO-TO:
-``` python run_main_hppo_to.py
+### 2.1 HPPO-TO: 
+```python python run_main_hppo_to.py ```
 ### 2.2 HPPO/DAC:
-```python python
-run_main_hrl.py
-### 2.3 PPO:
-```python python
-run_main_ppo.py
+```python python run_main_hrl.py ```
+### 2.3 PPO:     
+```python python run_main_ppo.py ```
