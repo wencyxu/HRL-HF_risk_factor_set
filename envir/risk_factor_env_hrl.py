@@ -9,19 +9,12 @@ from scipy.stats import pearsonr
 from scipy.stats import spearmanr
 
 def load_weight_encoding():
-    # 设置随机种子
     np.random.seed(0)
-    # 初始化权重组合列表
     weight_encoding = []
-    # 生成6个权重组合
     for _ in range(6):
-        # 生成5个随机数
         weights = np.random.rand(5)
-        # 确保随机数不为0
         weights += 0.1
-        # 归一化权重
         weights /= np.sum(weights)
-        # 将权重组合添加到列表中
         weight_encoding.append(weights.tolist())
     return weight_encoding
 
@@ -42,8 +35,7 @@ def load_data(file_path):
 
 class Risk_Factor_Env(object):
     def __init__(self, file_name):
-        data = load_data('/home/zhanghy/xuwenyan/HPPO_init_test2/data/{}.npz'.format(file_name))
-        # data = load_data('E:/2023Oct/HTF_risk_factor/HPPO_init_test2/data/{}.npz'.format(file_name))
+        data = load_data('./data/{}.npz'.format(file_name))
         self.input_feature = data[0]
         self.future_RV = data[1]
         self.seq_len, self.feature_num = self.input_feature.shape
@@ -54,7 +46,7 @@ class Risk_Factor_Env(object):
         self.reset()
         self.future_RVs = []
         self.best_expressions = []
-        self.values = []  # 新增一个列表来收集所有的value
+        self.values = []  
         self.ic_list = []
         self.counter = 0 
       
@@ -89,9 +81,7 @@ class Risk_Factor_Env(object):
             self.low_state = self.input_feature[self.t]
 
         if self.done:
-            # 创建一个新的列表，其中只包含非inf的expression_value
             valid_expressions = [(value, expression) for value, expression in zip(self.values, self.best_expressions) if value != float('inf')]
-            # 从这个列表中获取最大的三个值
             top_10_expressions = nlargest(10, valid_expressions)
             for value, expression in top_10_expressions:
                 print(f'Numeric Expression: {expression}, Label Expression: {label_expression}, Value: {value}')
@@ -99,44 +89,36 @@ class Risk_Factor_Env(object):
         return self.high_state, reward, self.done
     
     def generate_numeric_expression(self, feature_num, operator_num):
-        expression = str(feature_num[0])  # 初始化表达式
-        for i in range(1, len(feature_num)):  # 遍历剩余的特征
-            expression += operator_num[i-1] + str(feature_num[i])  # 添加运算符和特征
-        return expression  # 返回表达式
-    '''
-    def generate_label_expression(self, weight_num, operator_num):
-        expression = '(w1*' + self.feature_names[0] + ')'
-        for i in range(1, len(weight_num)):
-            expression += operator_num[i-1] + '(w' + str(i+1) + '*' + self.feature_names[i] + ')'
-        return expression
-    '''
+        expression = str(feature_num[0])  
+        for i in range(1, len(feature_num)):  
+            expression += operator_num[i-1] + str(feature_num[i]) 
+        return expression 
+
     def generate_label_expression(self, weight_num, operator_num, high_option):
         expression = '(w1*' + self.feature_names[0] + ')'
         for i in range(1, len(weight_num)):
             expression += operator_num[i-1] + '(w' + str(i+1) + '*' + self.feature_names[i] + ')'
-        expression += f' (weight_encoding index: {high_option})'  # 添加weight_encoding的索引
+        expression += f' (weight_encoding index: {high_option})'  
         return expression
 
     def evaluate_expression(self, expression):
         try:
-            value = eval(expression)  # 计算表达式的值
+            value = eval(expression) 
         except:
-            value = float('inf')  # 如果表达式无法计算，返回无穷大
+            value = float('inf') 
         return value
     
 
+
     '''case1 reward:IC(expression_values, future_RVs)'''
-    
     def calculate_IC(self, values, future_RVs):
         if len(values) < 2 or len(future_RVs) < 2:
             return 0.0
         values = np.array(values)
         future_RVs = np.array(future_RVs)
-        # 计算皮尔逊相关系数
         ic, _ = stats.pearsonr(values, future_RVs)
-        # 添加计数器
-        if self.counter < 20:
-            print(f"ic type: {type(ic)}, ic value: {ic}")  # 添加调试代码
+        print(f"rank_ic type: {type(rank_ic)}, rank_ic value: {rank_ic}")
+        if self.counter < 300:  
             self.counter += 1
         return ic
     
@@ -148,11 +130,9 @@ class Risk_Factor_Env(object):
             return 0.0
         values = np.array(values)
         future_RVs = np.array(future_RVs)
-        # 计算斯皮尔曼等级相关系数
         rank_ic, _ = stats.spearmanr(values, future_RVs)
-        # 添加计数器
-        if self.counter < 100:
-            print(f"rank_ic type: {type(rank_ic)}, rank_ic value: {rank_ic}")  # 添加调试代码
+        if self.counter < 300:
+            print(f"rank_ic type: {type(rank_ic)}, rank_ic value: {rank_ic}")  
             self.counter += 1
         return rank_ic
     '''
@@ -164,18 +144,14 @@ class Risk_Factor_Env(object):
             return 0.0
         values = np.array(values)
         future_RVs = np.array(future_RVs)
-        # 计算皮尔逊相关系数
         ic, _ = stats.pearsonr(values, future_RVs)
-        # 添加到IC列表
         self.ic_list.append(ic)
-        # 计算IR
         if len(self.ic_list) > 1:
             ir = np.mean(self.ic_list) / np.std(self.ic_list)
         else:
             ir = 0.0
-        # 添加计数器
-        if self.counter < 16000:
-            print(f"ir type: {type(ir)}, ir value: {ir}")  # 添加调试代码
+        if self.counter < 300:
+            print(f"ir type: {type(ir)}, ir value: {ir}")  
             self.counter += 1
         return ir
     '''
