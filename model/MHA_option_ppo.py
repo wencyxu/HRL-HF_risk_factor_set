@@ -1,11 +1,10 @@
 import copy
-
 import torch
 from typing import Union
-from .MHA_option_policy_critic import MHAOptionPolicy, MHAOptionCritic
+from utils.config import Config
 from .option_policy import OptionPolicy
 from .option_critic import OptionCritic
-from utils.config import Config
+from .MHA_option_policy_critic import MHAOptionPolicy, MHAOptionCritic
 
 class MHAOptionPPO(torch.nn.Module):
     def __init__(self, config: Config , policy: Union[MHAOptionPolicy, OptionPolicy], dim_s):
