@@ -14,3 +14,4 @@
 ```python python run_main_hrl.py ```
 ### 2.3 PPO:     
 ```python python run_main_ppo.py ```
+### For the above HRL/RL model use .npz file which contains ```python open,high,low,close,vwap,target``` as input. The dataset is of two types i.e. Environment name can be [sh300, sp500].
