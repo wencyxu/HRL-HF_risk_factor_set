@@ -156,7 +156,6 @@ class Risk_Factor_Env(object):
     '''
     
     def state_option_action_size(self):
-        # 返回高层策略的状态和选项的维度
         return self.feature_num, self.option_num, self.action_num
     
     
