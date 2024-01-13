@@ -109,7 +109,7 @@ class Risk_Factor_Env(object):
     
 
 
-    '''case1 reward:IC(expression_values, future_RVs)'''
+    '''case1 reward:IC*(expression_values, future_RVs)'''
     def calculate_IC(self, values, future_RVs):
         if len(values) < 2 or len(future_RVs) < 2:
             return 0.0
@@ -122,7 +122,7 @@ class Risk_Factor_Env(object):
         return ic
     
     
-    '''case2 reward:RankIC(expression_values, future_RVs)'''
+    '''case2 reward:RankIC*(expression_values, future_RVs)'''
     '''
     def calculate_RankIC(self, values, future_RVs):
         if len(values) < 2 or len(future_RVs) < 2:
@@ -136,7 +136,7 @@ class Risk_Factor_Env(object):
         return rank_ic
     '''
     
-    '''case3 reward:IR(expression_values, future_RVs)'''
+    '''case3 reward:IR*(expression_values, future_RVs)'''
     '''
     def calculate_IR(self, values, future_RVs):
         if len(values) < 2 or len(future_RVs) < 2:
