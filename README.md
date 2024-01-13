@@ -9,8 +9,7 @@
 - scipy 1.10.1
 ## 2 How to train model:
 ### 2.1 HPPO-TO:
-```python python
-run_main_hppo_to.py
+``` python run_main_hppo_to.py
 ### 2.2 HPPO/DAC:
 ```python python
 run_main_hrl.py
