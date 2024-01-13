@@ -2,28 +2,25 @@ from utils.config import Config
 
 default_config = Config({
     # global program config
-    # 训练的样本数量
     "n_sample": 4096,
     "n_epoch": 1000,  # 4000
-    # 预训练的迭代次数
     "n_pretrain_epoch": 0,
-    # 预训练过程中的日志记录间隔。记录在每个指定的间隔的训练信息(如损失和准确率)
     "pretrain_log_interval": 250, #1000
     
     # global policy config
     "activation": "relu",
     "hidden_policy": (512, 512), # 256, 256
-    "shared_policy": True, #??? consider setting this as true, if the number of options is too high
+    "shared_policy": True, # consider setting this as true, if the number of options is too high
     "log_clamp_policy": (-20., 0.),
     "optimizer_lr_policy": 3.e-3, # 3.e-4
 
-    "dim_c": 6, #??? number of options, should be set as 6
+    "dim_c": 6, # number of options, should be set as 6
     "hidden_option": (256, 256),  # 64, 64
     "optimizer_lr_option": 3.e-3, # 3.e-4
 
     # ppo config
     "hidden_critic": (256, 256),    # 64, 64
-    "shared_critic": True, #??? consider setting this as true, if the number of options is too high
+    "shared_critic": True, # consider setting this as true, if the number of options is too high
     "train_policy": True,
     "optimizer_lr_critic": 3.e-3, # 3.e-4
 
