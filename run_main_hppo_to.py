@@ -80,7 +80,7 @@ if __name__ == "__main__":
     multiprocessing.set_start_method('spawn')
     arg = ARGConfig()
     arg.add_arg("env_type", "risk_factor", "Environment type, can be [risk_factor, ...]")
-    arg.add_arg("env_name", "sh300", "Environment name, can be [sh300, sp500]") #???
+    arg.add_arg("env_name", "sh300", "Environment name, can be [sh300, sp500]") 
     arg.add_arg("algo", "hier_ppo_tran", "Algorithm type, can be [hier_ppo_tran]")
     arg.add_arg("device", "cuda:0", "Computing device")
     arg.add_arg("tag", "default", "Experiment tag")
@@ -96,9 +96,7 @@ if __name__ == "__main__":
     config.train_option = True
     '''sh300'''
     config.policy_model = "./option_model/100.torch" 
-    #config.critic_model = "./option_model/100_critic.torch"
     '''sp500'''
     #config.policy_model = "./option_model/50.torch" 
-    #config.critic_model = "./option_model/50_critic.torch"
     print(f">>>> Training {config.algo} on {config.env_name} environment, on {config.device}")
     learn(config, msg=config.tag)
