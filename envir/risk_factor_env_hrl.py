@@ -39,7 +39,7 @@ class Risk_Factor_Env(object):
         self.future_RV = data[1]
         self.seq_len, self.feature_num = self.input_feature.shape
         self.feature_names = ['open', 'low', 'high', 'close', 'vwap']
-        self.weight_encoding = load_weight_encoding()  # 加载 weight_encoding
+        self.weight_encoding = load_weight_encoding() 
         self.option_num = len(self.weight_encoding) 
         self.action_num = len(operator_encoding) 
         self.reset()
