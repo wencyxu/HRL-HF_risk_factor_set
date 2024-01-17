@@ -115,8 +115,8 @@ def Sampler(seed, env, policy, is_expert) -> _SamplerCommon:
     return class_m(seed, env, policy, loop_func, is_expert)
 
 
-# 判断当前文件是否是主模块，如果是，表示直接运行这个文件
+
 if __name__ == "__main__":
-    # 用于设置多进程的启动方式
+  
     from torch.multiprocessing import set_start_method
     set_start_method("spawn")
