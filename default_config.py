@@ -14,7 +14,7 @@ default_config = Config({
     "log_clamp_policy": (-20., 0.),
     "optimizer_lr_policy": 3.e-3, # 3.e-4
 
-    "dim_c": 6, # number of options, should be set as 6
+    "dim_c": 5, # number of options, should be set as 5
     "hidden_option": (256, 256),  # 64, 64
     "optimizer_lr_option": 3.e-3, # 3.e-4
 
