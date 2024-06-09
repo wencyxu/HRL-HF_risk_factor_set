@@ -8,7 +8,7 @@
 - tensorboard 2.14.0
 - scipy 1.10.1
 ## 2  Prepare you training data:
-* For the above HRL/RL model use .npz file which contains ```open,high,low,close,vwap,target``` as input. The dataset is of two types i.e. ```arg.add_arg("env_name", "sh300", "Environment name, can be [sh300, sp500]")```.
+* For the above HRL/RL model use .csv file which contains ```open,high,low,close,volume,vwap,target``` as input. The dataset is of two types i.e. ```arg.add_arg("env_name", "hs300", "Environment name, can be [hs300, sp500,nifty100,csi800]")```.
 * There are three ways to calculate rewards (a measure of the correlation between mathematical expressions of generated High Frequency Risk Factors and targets) in ```class Risk_Factor_Env: IC*, RankIC*, and IR*```.
 ## 3 How to train model:
 ### 3.1 HPPO-TO: 
