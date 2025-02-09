@@ -1,3 +1,11 @@
+# Please cite this paper:
+@article{xu2025mining,
+  title={Mining Intraday Risk Factor Collections via Hierarchical Reinforcement Learning based on Transferred Options},
+  author={Xu, Wenyan and Chen, Jiayu and Li, Chen and Hu, Yonghong and Lu, Zhonghua},
+  journal={arXiv preprint arXiv:2501.07274},
+  year={2025}
+}
+
 # HRL-HF_risk_factor_set
 ## 1 How to config the environments:
 - on Ubuntu 20.04.5
