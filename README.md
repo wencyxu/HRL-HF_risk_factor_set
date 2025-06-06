@@ -1,4 +1,4 @@
-# Please cite this paper:
+# If you find our research helpful, please cite our paper:
 ```
 @article{xu2025mining,
   title={Mining Intraday Risk Factor Collections via Hierarchical Reinforcement Learning based on Transferred Options},
